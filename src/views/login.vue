@@ -58,12 +58,14 @@ export default {
     const sendCapt = () => {
       if (data.code > 0) return;
       if (!checkPhone(data.form.username)) {
-        alert("错误");
+        alert("请输入手机号");
       } else {
         getCaptcha({ phone: data.form.username })
-          .then(() => {
+          .then((res) => {
+            clearInterval(timer)
             data.code = 30;
             showCapt.value = false;
+            data.form.password = res.data.code
             timer = setInterval(() => {
               data.code--;
               if (data.code < 1) {

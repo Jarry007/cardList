@@ -3,7 +3,7 @@
     <div class="card-list">
       <div class="card-title">
         会员卡
-        <span style="float:right">全部 {{number}}</span>
+        <span style="float:right">全部 {{list.length}}</span>
       </div>
       <template v-if="list.length">
         <div @click="toDetail(i)" class="card-item" v-for="i in list" :key="i.cardId">
@@ -21,7 +21,7 @@
     </div>
 
     <div class="card-btn" @click="openAdd">绑定储值卡</div>
-    <div class="card-btn" @click="clearToken">qingk</div>
+    <div class="card-btn" @click="clearToken">退出</div>
 
     <div class="modal" v-if="showModal">
       <span class="modal-close" @click="close">x</span>
@@ -129,6 +129,10 @@ export default {
     const store = useStore();
     const clearToken = () => {
       store.commit("setToken", "");
+      router.push({
+        path:'/'
+      })
+      
     };
     return {
       clearToken,

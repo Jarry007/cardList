@@ -41,15 +41,13 @@
 import { useRoute, useRouter } from "vue-router";
 import { ref, reactive, toRefs } from "vue";
 // import { watch } from 'vue'
-import { rechargeMoney, unbindCards, wxPay } from "@/api/detail.js";
-import { useStore } from "vuex";
+import { rechargeMoney, unbindCards,wxPay } from "@/api/detail.js";
+// import { useStore } from "vuex";
 // import func from '../../vue-temp/vue-editor-bridge';
 export default {
   name: "detail",
   setup() {
     const route = useRoute();
-    // console.log()
-    const store = useStore();
     const cardNum = ref("");
     const cardMoney = ref('0')
     let data = reactive({
@@ -58,8 +56,8 @@ export default {
     });
     cardNum.value = route.query.cardNum;
     cardMoney.value = parseFloat(route.query.money).toFixed(2);
-    const wCpay = (data)=>{
-      return data
+    // const wCpay = (data)=>{
+    //   return data
       // if(!typeof WeixinJSBridge) return
       // WeixinJSBridge.invoke('getBrandWCPayRequest',{
       //     appId: data.appId, //公众号名称，由商户传入
@@ -79,7 +77,7 @@ export default {
       //       alert('支付失败')
       //     }
       // })
-    }
+    // }
     const rechargeIt = async () => {
       const rechargeM = parseFloat(data.money);
       if (!rechargeM || rechargeM < 0) {
@@ -91,16 +89,16 @@ export default {
             money: rechargeM,
           };
           let chargeR = await rechargeMoney(params);
-          // console.log(chargeR);
-          // console.log(store.state.openid)
           const payParam = {
-            openid: store.state.openid,
             rechargeNum: chargeR.data.rechargeNum,
           };
           let payInfo = await wxPay(payParam);
-
-          console.log(payInfo);
-          wCpay(payInfo.data)
+          if(payInfo){
+            alert('充值成功')
+            cardMoney.value = (parseFloat(cardMoney.value) + rechargeM).toFixed(2)
+          }
+          // console.log(payInfo);
+          // wCpay(payInfo.data)
         } catch (err) {
           alert(err.msg || "充值失败");
         }
@@ -123,7 +121,7 @@ export default {
       if (data.unbindNum && data.unbindNum == cardNum.value) {
         unbindCards({ cardNum: data.unbindNum })
           .then(() => {
-            // close();
+            alert('解绑成功')
             router.push({
               path: "/index",
             });
