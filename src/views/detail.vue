@@ -1,29 +1,41 @@
 <template>
-  <!-- <div>这是一个详情页</div> -->
-  <div>
-  
   <div class="rechage-title">
-    储值卡号
-    <span @click="showUnbind" style="float:right">...</span>
-    <p>
-      <span class="icon">图</span>
-      {{cardNum}}
-
-      <span style="float:right">余额:{{cardMoney || '0.00'}}</span>
-    </p>
+    余额 <span class="amount-money">{{ cardMoney || "0.00" }}</span> 元
   </div>
 
   <div class="recharge-body">
-    充值金额
-    <div class="login-input">
-      <span class="input-labels">￥</span>
-      <input type="number" v-model="money" placeholder="充值金额" />
+    <div class="ic-num">
+      IC卡号 <span class="amount-money"> {{ cardNum }}</span>
     </div>
 
-    <div class="login-btn" @click="rechargeIt">充 值</div>
+    <div class="meal-body">
+      <div class="meal" :class="{ active: i === 2 }" v-for="i in 5" :key="i">
+        <span class="" style="font-size: 14px; font-weight: 400">￥</span
+        >{{ i }}
+        <div class="light-text">售价{{ i + 100 }}元</div>
+      </div>
+      <div class="meal-input">
+        <input type="number" v-model="money" placeholder="自定义" />
+      </div>
+    </div>
+    <div ontouchstart="" class="login-btn" @click="rechargeIt">充 值</div>
+
+    <div class="unbind-text">
+      <a-popconfirm
+        @confirm="unbindIt"
+        title="您确定解绑该卡？"
+        ok-text="确认"
+        cancel-text="取消"
+      >
+        <span>解绑会员卡</span>
+      </a-popconfirm>
+    </div>
   </div>
-  
-  <div class="modal" v-if="open">
+
+  <a-modal v-model:visible="open" title="解绑">
+    <p>您确定解绑该卡？</p>
+  </a-modal>
+  <!-- <div class="modal" v-if="open">
     <span class="modal-close" @click="close">x</span>
     <div class="modal-container">
       <div class="modal-title">请输入该卡号</div>
@@ -33,55 +45,63 @@
       </div>
       <div class="unbind-btn" @click="unbindIt">解 绑</div>
     </div>
-  </div>
-  </div>
+  </div> -->
 </template>
 
 <script>
 import { useRoute, useRouter } from "vue-router";
 import { ref, reactive, toRefs } from "vue";
 // import { watch } from 'vue'
-import { rechargeMoney, unbindCards,wxPay } from "@/api/detail.js";
-// import { useStore } from "vuex";
+import { message } from "ant-design-vue";
+import { rechargeMoney, unbindCards, wxPay } from "@/api/detail.js";
+import { useStore } from "vuex";
 // import func from '../../vue-temp/vue-editor-bridge';
 export default {
   name: "detail",
   setup() {
+     const store = useStore();
     const route = useRoute();
     const cardNum = ref("");
-    const cardMoney = ref('0')
+    const cardMoney = ref("0");
     let data = reactive({
       money: "",
       unbindNum: "",
     });
     cardNum.value = route.query.cardNum;
-    cardMoney.value = parseFloat(route.query.money).toFixed(2);
-    // const wCpay = (data)=>{
-    //   return data
-      // if(!typeof WeixinJSBridge) return
-      // WeixinJSBridge.invoke('getBrandWCPayRequest',{
-      //     appId: data.appId, //公众号名称，由商户传入
-      //     timeStamp: data.timeStamp, //时间戳，自1970年以来的秒数
-      //     nonceStr: data.nonceStr, //随机串
-      //     package: data.package,
-      //     signType: "MD5", //微信签名方式：
-      //     paySign: data.sign, //微信
-      // },res=>{
-      // console.log('支付回调',res.errMsg)
-      // alert(res.errMsg)
-      //   if (res.errMsg == "get_brand_wcpay_request:ok") {
-      //       console.log("zhifu chengg ");
-      //       alert('支付成功')
+    cardMoney.value =parseFloat(route.query.money)?  parseFloat(route.query.money).toFixed(2):0 ;
+    const wxJsBridge = window.WeixinJSBridge;
+    if (wxJsBridge) {
+      message.success("可以使用");
+    }
+    const wCpay = (data) => {
+      // return data
 
-      //     }else{
-      //       alert('支付失败')
-      //     }
-      // })
-    // }
+      wxJsBridge.invoke(
+        "getBrandWCPayRequest",
+        {
+          appId: data.appId, //公众号名称，由商户传入
+          timeStamp: data.timeStamp, //时间戳，自1970年以来的秒数
+          nonceStr: data.nonceStr, //随机串
+          package: data.package,
+          signType: "MD5", //微信签名方式：
+          paySign: data.sign, //微信
+        },
+        (res) => {
+          console.log("支付回调", res.errMsg);
+          message.info(res.errMsg);
+          if (res.errMsg == "get_brand_wcpay_request:ok") {
+            console.log("zhifu chengg ");
+            message.success("支付成功");
+          } else {
+            message.error("支付失败");
+          }
+        }
+      );
+    };
     const rechargeIt = async () => {
       const rechargeM = parseFloat(data.money);
       if (!rechargeM || rechargeM < 0) {
-        return alert("请输入正金额");
+        return message.error("请输入正金额");
       } else {
         try {
           const params = {
@@ -90,15 +110,18 @@ export default {
           };
           let chargeR = await rechargeMoney(params);
           const payParam = {
+            openid: store.state.openid,
             rechargeNum: chargeR.data.rechargeNum,
           };
           let payInfo = await wxPay(payParam);
-          if(payInfo){
-            alert('充值成功')
-            cardMoney.value = (parseFloat(cardMoney.value) + rechargeM).toFixed(2)
-          }
+          // if (payInfo) {
+          //   message.success("充值成功");
+          //   cardMoney.value = (parseFloat(cardMoney.value) + rechargeM).toFixed(
+          //     2
+          //   );
+          // }
           // console.log(payInfo);
-          // wCpay(payInfo.data)
+          wCpay(payInfo.data);
         } catch (err) {
           alert(err.msg || "充值失败");
         }
@@ -118,18 +141,18 @@ export default {
     const router = useRouter();
 
     const unbindIt = () => {
-      if (data.unbindNum && data.unbindNum == cardNum.value) {
-        unbindCards({ cardNum: data.unbindNum })
-          .then(() => {
-            alert('解绑成功')
-            router.push({
-              path: "/index",
-            });
-          })
-          .catch((err) => {
-            alert(err.msg || "解绑失败");
+      // if (data.unbindNum && data.unbindNum == cardNum.value) {
+      unbindCards({ cardNum: cardNum.value })
+        .then(() => {
+          message.success("解绑成功");
+          router.push({
+            path: "/index",
           });
-      }
+        })
+        .catch((err) => {
+          alert(err.msg || "解绑失败");
+        });
+      // }
     };
     return {
       unbindIt,
@@ -146,6 +169,61 @@ export default {
 </script>
 
 <style scoped>
+.unbind-text {
+  width: 100%;
+  text-align: center;
+  margin-top: 100px;
+  padding-bottom: 20px;
+  color: rgb(25, 104, 250);
+}
+.meal.active {
+  background: var(--green);
+  /* color: #fff; */
+  border: 1px solid transparent;
+}
+.meal.active .light-text {
+  color: #222;
+}
+.light-text {
+  font-size: 0.9rem;
+  color: #798199;
+  font-weight: 400;
+}
+.meal-input {
+  height: 80px;
+  border: 1px solid var(--green);
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+.meal {
+  height: 80px;
+  border: 1px solid var(--green);
+  padding: 0;
+  border-radius: 10px;
+  text-align: center;
+  color: #111;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+.meal-body {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  row-gap: 16px;
+  column-gap: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.ic-num {
+  text-align: left;
+  padding-left: 20px;
+}
+.amount-money {
+  font-size: 1.2rem;
+  font-family: Arial, Helvetica, sans-serif;
+}
 .unbind-btn {
   text-align: center;
   width: calc(100% - 60px);
@@ -167,49 +245,41 @@ export default {
   padding: 0;
 }
 .login-btn {
-  text-align: center;
-  width: calc(100% - 60px);
+  width: 80%;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #222;
   border-radius: 5px;
-  background: cornflowerblue;
-  box-shadow: 0px 6px 9px -4px cornflowerblue;
-  color: #fff;
-  margin-top: 4vh;
-  margin-left: 20px;
-  height: 40px;
-  line-height: 40px;
+  background: var(--green);
+  margin-top: 5vh;
+  margin-left: 10%;
+  height: 50px;
+  border-radius: 50px;
+  line-height: 50px;
+}
+.login-btn:active {
+  filter: invert(0.1);
 }
 input {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  height: 58px;
-  line-height: 58px;
-  /* border: 1px solid; */
-  padding: 0;
+  text-align: center;
+  color: #111;
+  height: 60px;
+  line-height: 60px;
 }
 input::placeholder {
-  /* background: transparent; */
-  font-size: 0.9rem;
-  color: grey;
-  height: 58px;
-  font-weight: 400;
+  font-size: 1.1rem;
+  color: #111;
+  font-weight: 500;
+  text-align: center;
 }
-.input-labels {
-  font-size: 1.2rem;
-  width: 60px;
-  line-height: 60px;
-  /* background: coral; */
-}
-.login-input {
-  display: flex;
-  height: 60px;
-  width: calc(100% - 60px);
-  margin-left: 20px;
-  margin-top: 30px;
-  border-bottom: 1px solid cornflowerblue;
-}
+
 .rechage-title {
-  width: calc(100% - 40px);
-  padding-left: 20px;
+  /* width: calc(100% - 40px); */
+  width: 100%;
+  padding: 10px 20px;
+  height: 50px;
   text-align: left;
   background: #fff;
 }
@@ -224,10 +294,9 @@ input::placeholder {
   background: lightblue;
 }
 .recharge-body {
-  text-align: left;
   padding-top: 20px;
-  margin-top: 20px;
-  padding-bottom: 20px;
-  /* border: 1px solid slategrey; */
+  margin-top: 10px;
+  height: calc(100vh - 10px - 50px);
+  background: #fff;
 }
 </style>

@@ -2,7 +2,10 @@ export default [
     {
         path:'/',
         name:'Home',
-        component:()=>import ('@/views/login.vue')
+        component:()=>import ('@/views/login.vue'),
+        meta:{
+            title:'登录'
+        }
     },
     {
         path:'/index',

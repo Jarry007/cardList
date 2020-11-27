@@ -1,27 +1,29 @@
 <template>
-  <div class="login-bg">
-    <div class="login-title">登录</div>
-    <div class="login-input">
-      <span class="input-label">图</span>
-      <input type="text" v-model="form.username" placeholder="请输入手机号" />
+  <div class="logo">
+    <img :src="img" alt="" />
+  </div>
+
+  <div class="login-inputs">
+    <div class="input-labels">+86</div>
+    <input type="text" v-model="form.username" placeholder="请输入手机号" />
+  </div>
+
+  <div class="login-inputs" style="border-top: none">
+    <div class="input-labels">验证码</div>
+    <input
+      v-model="form.password"
+      class="pwd-input"
+      type="text"
+      placeholder="请输入密码"
+    />
+    <div ontouchstart="" class="input-code" @click="sendCapt">
+      {{ showCapt ? "获取验证码" : `${code} s` }}
     </div>
+  </div>
 
-    <div class="login-input">
-      <span class="input-label">图</span>
-      <input
-        v-model="form.password"
-        class="pwd-input"
-        type="text"
-        placeholder="请输入密码"
-      />
-      <span class="input-code" @click="sendCapt">{{
-        showCapt ? "获取验证码" : `${code} s`
-      }}</span>
-    </div>
+  <div class="login-btn" @click="loginIt" ontouchstart="">登 录</div>
 
-    <div class="login-btn" @click="loginIt">登 录</div>
-
-    <a-button type="primary" @click="messageSend">消息提醒</a-button>
+  <!-- <a-button type="primary" @click="messageSend">消息提醒</a-button>
     <div>
       <a-select
         v-model:value="selectValue"
@@ -43,27 +45,34 @@
       v-model:value="defaultDate"
       @change="onChange"
       @ok="onOk"
-    />
-    <!-- <form @submit.prevent="submitLogin">
+    /> -->
+  <!-- <form @submit.prevent="submitLogin">
       <input type="text" v-model="form.username" placeholder="名字" />
       <input type="password" v-model="form.password" placeholder="密码" />
       <button type="submit">提交</button>
     </form>-->
-  </div>
 </template>
 
 <script>
 import { useRouter } from "vue-router";
-import { message } from "ant-design-vue";
+import logoImg from "@/assets/logo3.png";
+import { message, notification } from "ant-design-vue";
 import { checkPhone } from "@/utils/util";
-import { ref, toRefs, reactive, inject } from "vue";
+// import { ref, toRefs, reactive, inject } from "vue";
+import { ref, toRefs, reactive, onMounted } from "vue";
 import { login, getCaptcha, goCheck } from "@/api/login";
-import locale from "ant-design-vue/es/date-picker/locale/zh_CN";
+// import locale from "ant-design-vue/es/date-picker/locale/zh_CN";
 // import {setTokens} from '@/utils/util'
 import { useStore } from "vuex";
 export default {
   name: "Home",
   setup() {
+    onMounted(() => {
+      document.title = "登录";
+      console.log( 'd',process.env.VUE_APP_BASE_URL)
+      // message.success('d'+ process.env.BASE_URL)
+    });
+
     let data = reactive({
       form: {
         username: "",
@@ -82,7 +91,10 @@ export default {
         // console.log('info',info)
         // setTokens(res.msg)
       } catch (error) {
-        console.log("失败", error);
+        notification.open({
+          message: "错误",
+          description: error,
+        });
       }
     };
     let timer;
@@ -90,14 +102,14 @@ export default {
     const sendCapt = () => {
       if (data.code > 0) return;
       if (!checkPhone(data.form.username)) {
-        alert("请输入手机号");
+        message.error("请正确输入手机号");
       } else {
         getCaptcha({ phone: data.form.username })
-          .then((res) => {
+          .then(() => {
             clearInterval(timer);
             data.code = 30;
             showCapt.value = false;
-            data.form.password = res.data.code;
+            // data.form.password = res.data.code;
             timer = setInterval(() => {
               data.code--;
               if (data.code < 1) {
@@ -107,7 +119,10 @@ export default {
             }, 1000);
           })
           .catch((err) => {
-            alert(err.msg || "错误");
+            notification.open({
+              message: "错误",
+              description: err.msg || "发送失败",
+            });
           });
       }
     };
@@ -123,8 +138,10 @@ export default {
           store.commit("setToken", checkRes.data.token);
           toIndex();
         } catch (error) {
-          console.log(error);
-          alert(error.msg || "发生了点错误");
+          notification.open({
+          message:'错误',
+          description:error.msg || "错误"
+        })
         }
       }
     };
@@ -134,80 +151,109 @@ export default {
         path: "/index",
       });
     };
-    const msg = inject("$message");
-    const global_ = inject("_globalData");
+    // const msg = inject("$message");
+    // const global_ = inject("_globalData");
     // const { ctx } = getCurrentInstance()
-    const messageSend = () => {
-      console.log(global_);
-      // console.log(ctx)
-      msg.d = "我添加了一个d";
-      msg.a = "reset a";
+    // const messageSend = () => {
+    //   console.log(global_);
+    //   // console.log(ctx)
+    //   msg.d = "我添加了一个d";
+    //   msg.a = "reset a";
 
-      msg.error("this is an error message");    
-      message.success("This is a success message");
-    };
+    //   msg.error("this is an error message");
+    //   message.success("This is a success message");
+    // };
 
-    const selectChange = (e) => {
-      console.log(e);
-    };
-    const selectValue = ref("tom");
+    // const selectChange = (e) => {
+    //   console.log(e);
+    // };
+    // const selectValue = ref("tom");
 
-    // 这里是日期时间选择器相关的
+    // // 这里是日期时间选择器相关的
 
-    const onChange = (_, dateString) => {
-      console.log("value, dateString", dateString);
-      data.defaultDate = dateString;
-    };
+    // const onChange = (_, dateString) => {
+    //   console.log("value, dateString", dateString);
+    //   data.defaultDate = dateString;
+    // };
 
-    const onOk = () => {
-      console.log("数据", data.defaultDate[0], data.defaultDate[1]);
-    };
-    data.defaultDate = ["2020-10-15 11:13", "2020-12-01 11:13"];
-
+    // const onOk = () => {
+    //   console.log("数据", data.defaultDate[0], data.defaultDate[1]);
+    // };
+    // data.defaultDate = ["2020-10-15 11:13", "2020-12-01 11:13"];
+    const img = ref("");
+    img.value = logoImg;
     return {
+      img,
       showCapt,
       ...toRefs(data),
       submitLogin,
       sendCapt,
       loginIt,
-      messageSend,
-      selectChange,
-      selectValue,
-      onOk,
-      onChange,
-      locale,
+      // messageSend,
+      // selectChange,
+      // selectValue,
+      // onOk,
+      // onChange,
+      // locale,
     };
   },
 };
 </script>
 
 <style scoped>
+.logo {
+  padding-top: 30px;
+  margin-bottom: 40px;
+}
+.logo img {
+  width: 110px;
+  object-fit: contain;
+  height: 170px;
+}
 .input-code {
+  /* display: inline-block; */
+  padding: 4px 4px;
+  color: #333;
   font-size: 12px;
-  width: 118px;
-  text-align: center;
-  line-height: 38px;
+  width: 90px;
+  /* text-align: center;
+  line-height: 38px; */
+  border-radius: 4px;
+  background: var(--green);
+}
+.input-code:active {
+  filter: invert(0.1);
 }
 .pwd-input {
-  width: calc(100% - 130px);
+  width: calc(100% - 100px);
 }
-.login-bg {
+.input-labels {
+  width: 80px;
 }
 .login-btn {
-  width: calc(100% - 40px);
+  width: 80%;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #222;
   border-radius: 5px;
-  background: cornflowerblue;
-  box-shadow: 0px 6px 9px -4px cornflowerblue;
-  color: #fff;
-  margin-top: 4vh;
-  margin-left: 20px;
-  height: 40px;
-  line-height: 40px;
+  background: var(--green);
+  margin-top: 5vh;
+  margin-left: 10%;
+  height: 50px;
+  border-radius: 50px;
+  line-height: 50px;
 }
-.login-title {
-  font-size: 20px;
-  margin-left: 20px;
-  font-weight: 500;
-  margin-top: 100px;
+.login-btn:active {
+  filter: invert(0.1);
+}
+.login-inputs {
+  padding-right: 15px;
+  height: 60px;
+  width: calc(100% - 30px);
+  margin-left: 15px;
+  border: 1px solid #eee;
+  background: #fff;
+  display: flex;
+  align-items: center;
 }
 </style>

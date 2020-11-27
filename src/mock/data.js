@@ -21,7 +21,7 @@ export function sendCapt(){
 export function getList (){
     return {
         code:'200',
-        'data|10':[{
+        'data|3':[{
             "cardId|+1":1,
             "cardNum":()=>random.integer(10000000,99999999),
             "cardBalance":()=>random.float(0,100)

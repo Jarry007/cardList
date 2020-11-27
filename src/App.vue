@@ -15,11 +15,18 @@ export default {
 
 <style>
 #app {
+  --green:rgb(98,213,180);
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  background: #eee;
+  padding: 0;
   /* margin-top: 60px; */
 }
 input:-internal-autofill-selected {
@@ -28,7 +35,8 @@ input:-internal-autofill-selected {
 }
 input::placeholder {
   background: transparent;
-  font-size: 0.9rem;
+  /* font-size: 0.9rem; */
+  color: #bcc1c5;
 }
 input:focus {
   outline: none;
@@ -45,15 +53,17 @@ input[type="text" i] {
 }
 .input-label {
   width: 40px;
-  line-height: 40px;
+  /* line-height: 40px; */
+  color: #222;
 }
 .login-input {
   display: flex;
-  height: 40px;
-  width: calc(100% - 40px);
-  margin-left: 20px;
-  margin-top: 30px;
-  border-bottom: 1px solid cornflowerblue;
+  height: 50px;
+  align-items: center;
+  width: 100%;
+  font-size: 1rem;
+  /* background: deepskyblue; */
+  border-bottom: 1px solid #eee;
 }
 .modal-container {
   width: 90%;
